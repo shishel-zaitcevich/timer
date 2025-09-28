@@ -1,7 +1,18 @@
-.label {
-  margin-left: 20px;
-}
+.notifications {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
-.input {
-  margin-right: 5px;
+  @media (max-width: 600) {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .label {
+    margin-left: 20px;
+  }
+
+  .input {
+    margin-right: 5px;
+  }
 }

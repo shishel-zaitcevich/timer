@@ -9,7 +9,7 @@ interface Props {
 
 export default function NotificationMode({ mode, onChange }: Props) {
   return (
-    <div>
+    <div className={s.notifications}>
       <label>
         <input
           type="radio"
