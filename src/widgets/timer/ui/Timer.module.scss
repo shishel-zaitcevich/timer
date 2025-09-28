@@ -1,0 +1,39 @@
+.timerContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  margin-top: 50px;
+
+  .title {
+    font-size: 36px;
+    font-weight: 700;
+    text-align: center;
+    max-width: 600px;
+  }
+
+  .text {
+    font-size: 20px;
+  }
+
+  .time {
+    font-weight: 700;
+  }
+
+  .timer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 20px;
+
+    @media (max-width: 600) {
+      flex-direction: column;
+    }
+  }
+
+  .alarmClock {
+    margin-bottom: 20px;
+  }
+}
