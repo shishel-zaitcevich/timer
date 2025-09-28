@@ -1,0 +1,18 @@
+{
+  "builds": [
+    {
+      "src": "next.config.js",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "public/timerWorker.js",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/timerWorker.js",
+      "dest": "/timerWorker.js"
+    }
+  ]
+}

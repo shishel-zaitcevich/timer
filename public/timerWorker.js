@@ -1,4 +1,19 @@
-import { formatIntervalWithPastTense } from "@/shared/lib/pluralize";
+// Встроенная функция formatIntervalWithPastTense
+function formatIntervalWithPastTense(minutes) {
+  const lastDigit = minutes % 10;
+  const lastTwoDigits = minutes % 100;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+    return `${minutes} минут назад`;
+  }
+  if (lastDigit === 1) {
+    return `${minutes} минута назад`;
+  }
+  if (lastDigit >= 2 && lastDigit <= 4) {
+    return `${minutes} минуты назад`;
+  }
+  return `${minutes} минут назад`;
+}
 
 self.onmessage = (e) => {
   const { running, paused, intervalMinutes, lastSpeakTime } = e.data;

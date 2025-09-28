@@ -63,7 +63,23 @@ export function formatInterval(minutes: number): string {
 }
 
 export function formatIntervalWithPastTense(minutes: number): string {
-  const pastTense = getPastTenseForm(minutes);
-  const interval = formatInterval(minutes);
-  return `${pastTense} ${interval}`;
+  const lastDigit = minutes % 10;
+  const lastTwoDigits = minutes % 100;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+    return `${minutes} минут назад`;
+  }
+  if (lastDigit === 1) {
+    return `${minutes} минута назад`;
+  }
+  if (lastDigit >= 2 && lastDigit <= 4) {
+    return `${minutes} минуты назад`;
+  }
+  return `${minutes} минут назад`;
 }
+
+// export function formatIntervalWithPastTense(minutes: number): string {
+//   const pastTense = getPastTenseForm(minutes);
+//   const interval = formatInterval(minutes);
+//   return `${pastTense} ${interval}`;
+// }
