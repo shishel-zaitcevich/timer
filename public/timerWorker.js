@@ -32,41 +32,41 @@ self.onmessage = (e) => {
   if (running && startTime) {
     workerStartTime = startTime;
     lastNotificationTime = startTime; // Устанавливаем время последнего уведомления при старте
-    
+
     const tick = () => {
       const now = Date.now();
-      const currentTime = new Date().toLocaleTimeString("ru-RU");
+      const currentTime = new Date().toLocaleTimeString('ru-RU');
 
       // Отправляем обновление времени
-      self.postMessage({ type: "tick", data: { currentTime, now } });
+      self.postMessage({ type: 'tick', data: { currentTime, now } });
 
       // Проверка интервала для уведомления
       if (intervalMinutes > 0) {
         const timeSinceLastNotification = now - lastNotificationTime;
         const shouldNotify = timeSinceLastNotification >= intervalMinutes * 60000;
-        
-        console.log('[Worker] Проверка уведомления:', { 
-          now, 
-          lastNotificationTime, 
-          timeSinceLastNotification: Math.floor(timeSinceLastNotification / 1000), 
+
+        console.log('[Worker] Проверка уведомления:', {
+          now,
+          lastNotificationTime,
+          timeSinceLastNotification: Math.floor(timeSinceLastNotification / 1000),
           intervalMinutes,
-          shouldNotify
+          shouldNotify,
         });
-        
+
         if (shouldNotify) {
-          const timeStr = new Date().toLocaleTimeString("ru-RU", {
-            hour: "2-digit",
-            minute: "2-digit",
+          const timeStr = new Date().toLocaleTimeString('ru-RU', {
+            hour: '2-digit',
+            minute: '2-digit',
           });
           const intervalStr = formatIntervalWithPastTense(intervalMinutes);
-          
+
           console.log('[Worker] Отправка уведомления:', { timeStr, intervalStr });
-          
-          self.postMessage({ 
-            type: "notification", 
-            data: { now, timeStr, intervalStr } 
+
+          self.postMessage({
+            type: 'notification',
+            data: { now, timeStr, intervalStr },
           });
-          
+
           lastNotificationTime = now; // Обновляем время последнего уведомления
         }
       }
