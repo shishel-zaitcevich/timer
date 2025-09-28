@@ -8,7 +8,6 @@ import TimerControl from '@/features/timerControl/ui/TimerControl';
 
 import { useTimer } from '../model/useTimer';
 import NotificationMode from '@/features/notificationMode/ui/NotificationMode';
-import { AlarmClockLoader } from '@/shared/ui/AlarmClockLoader/AlarmClockLoader';
 
 import s from './Timer.module.scss'
 import { AnimatePresence, motion } from 'framer-motion';
@@ -66,13 +65,6 @@ export default function Timer() {
       >
         Таймер с озвучкой специально для Тучки
       </motion.h1>
-
-      <motion.div
-        animate={{ rotate: running && !paused ? 360 : 0 }}
-        transition={{ duration: 1, repeat: running && !paused ? Infinity : 0, ease: 'linear' }}
-      >
-        <AlarmClockLoader size="large" className={s.alarmClock} />
-      </motion.div>
 
       <motion.p
         className={s.text}
