@@ -2,7 +2,7 @@
 import { beep } from "@/shared/lib/beep";
 import { formatIntervalWithPastTense } from "@/shared/lib/pluralize";
 import { speak } from "@/shared/lib/speak";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export function useTimer(
   intervalMinutes: number,
@@ -16,68 +16,66 @@ export function useTimer(
   const [elapsed, setElapsed] = useState<number>(0);
   const [pauseTime, setPauseTime] = useState<number | null>(null);
   const [totalPausedTime, setTotalPausedTime] = useState<number>(0);
+  const workerRef = useRef<Worker | null>(null);
 
+  // Инициализация Web Worker
   useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      setCurrentTime(now.toLocaleTimeString("ru-RU"));
-
-      if (running && !paused && startTime) {
-        const newElapsed = Date.now() - startTime - totalPausedTime;
-        setElapsed(newElapsed);
-        console.log('useTimer tick:', { 
-          elapsed: newElapsed, 
-          seconds: Math.floor(newElapsed / 1000),
-          totalPausedTime,
-          startTime,
-          now: Date.now()
-        });
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [running, paused, startTime, totalPausedTime]);
-
-  useEffect(() => {
-    if (!running || paused) return;
-
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const diffMinutes = Math.floor((now - lastSpeakTime) / 60000);
-
-      if (diffMinutes >= intervalMinutes) {
-        const nowDate = new Date();
-        const timeStr = nowDate.toLocaleTimeString("ru-RU", {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-
-        const intervalStr = formatIntervalWithPastTense(intervalMinutes);
-
-        if (mode === "speech") {
-          speak(`${intervalStr}. Сейчас ${timeStr}`);
-        } else if (mode === "beep") {
-          beep();
+    if (typeof window !== "undefined") {
+      workerRef.current = new Worker(new URL("./timerWorker.ts", import.meta.url));
+      workerRef.current.onmessage = (e) => {
+        const { type, data } = e.data;
+        if (type === "tick") {
+          setCurrentTime(data.currentTime);
+          if (running && !paused && startTime) {
+            const newElapsed = data.now - startTime - totalPausedTime;
+            setElapsed(newElapsed);
+            console.log('useTimer tick:', {
+              elapsed: newElapsed,
+              seconds: Math.floor(newElapsed / 1000),
+              totalPausedTime,
+              startTime,
+              now: data.now,
+            });
+          }
+        } else if (type === "notification") {
+          const { now, timeStr, intervalStr } = data;
+          if (mode === "speech") {
+            speak(`${intervalStr}. Сейчас ${timeStr}`);
+          } else if (mode === "beep") {
+            beep();
+          }
+          setLastSpeakTime(now);
         }
+      };
 
-        setLastSpeakTime(now);
-      }
-    }, 1000);
+      return () => {
+        workerRef.current?.terminate();
+      };
+    }
+  }, [running, paused, startTime, totalPausedTime, mode, intervalMinutes]);
 
-    return () => clearInterval(interval);
-  }, [intervalMinutes, lastSpeakTime, running, paused, mode]);
+  // Синхронизация состояния с Web Worker
+  useEffect(() => {
+    if (workerRef.current) {
+      workerRef.current.postMessage({
+        running,
+        paused,
+        intervalMinutes,
+        lastSpeakTime,
+      });
+    }
+  }, [running, paused, intervalMinutes, lastSpeakTime]);
 
   const start = () => {
-    setElapsed(0); // Обнуляем elapsed только при новом запуске
+    setElapsed(0);
     setStartTime(Date.now());
     setLastSpeakTime(Date.now());
     setPauseTime(null);
-    setTotalPausedTime(0); // Сбрасываем общее время паузы
+    setTotalPausedTime(0);
   };
 
   const resume = () => {
     if (pauseTime) {
-      // Добавляем время, проведенное на паузе, к totalPausedTime
       const timePaused = Date.now() - pauseTime;
       setTotalPausedTime((prev) => prev + timePaused);
       setPauseTime(null);
@@ -87,14 +85,12 @@ export function useTimer(
   const stop = () => {
     setStartTime(null);
     setPauseTime(null);
-    // Не обнуляем elapsed, чтобы сохранить для модального окна
   };
 
   const pause = () => {
     if (paused) {
-      resume(); // Возобновляем таймер, если уже на паузе
+      resume();
     } else {
-      // Приостанавливаем таймер
       setPauseTime(Date.now());
     }
   };
