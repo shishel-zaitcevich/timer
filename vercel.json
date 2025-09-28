@@ -1,4 +1,5 @@
 {
+  "version": 2,
   "builds": [
     {
       "src": "next.config.js",
@@ -13,6 +14,10 @@
     {
       "src": "/timerWorker.js",
       "dest": "/timerWorker.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/"
     }
   ]
 }

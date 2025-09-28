@@ -82,7 +82,7 @@ export default function Timer() {
         Текущее время: <span>{currentTime}</span>
       </motion.p>
 
-      <motion.p className={s.text}>
+      <motion.p className={s.timer}>
         Потраченное время: <TimeDisplay elapsed={elapsed} running={running} paused={paused} />
       </motion.p>
 

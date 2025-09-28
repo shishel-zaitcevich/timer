@@ -1,167 +1,121 @@
-"use client";
-import { beep } from "@/shared/lib/beep";
-import { formatIntervalWithPastTense } from "@/shared/lib/pluralize";
-import { speak } from "@/shared/lib/speak";
-import { useEffect, useState, useRef } from "react";
+'use client';
+import { beep } from '@/shared/lib/beep';
+import { formatIntervalWithPastTense } from '@/shared/lib/pluralize';
+import { speak } from '@/shared/lib/speak';
+import { useEffect, useState, useRef } from 'react';
 
 export function useTimer(
   intervalMinutes: number,
-  mode: "speech" | "beep" | "off",
+  mode: 'speech' | 'beep' | 'off',
   running: boolean,
   paused: boolean,
 ) {
-  const [lastSpeakTime, setLastSpeakTime] = useState<number>(Date.now());
-  const [currentTime, setCurrentTime] = useState<string>("");
+  const [currentTime, setCurrentTime] = useState<string>(''); // всегда тикать
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState<number>(0);
+
   const [pauseTime, setPauseTime] = useState<number | null>(null);
   const [totalPausedTime, setTotalPausedTime] = useState<number>(0);
+
   const workerRef = useRef<Worker | null>(null);
+  const isSpeakingRef = useRef<boolean>(false);
+  const lastNotificationTimeRef = useRef<number>(0);
 
-  // Запрашиваем разрешение на уведомления при монтировании
-  useEffect(() => {
-    if (typeof window !== "undefined" && "Notification" in window) {
-      Notification.requestPermission().then((permission) => {
-        if (permission === "granted") {
-          console.log("Разрешение на уведомления получено");
-        } else {
-          console.warn("Разрешение на уведомления отклонено");
-        }
-      });
+  // ===== Обработка уведомлений =====
+  const handleNotification = (timeStr: string, intervalStr: string) => {
+    if (isSpeakingRef.current) return;
+    isSpeakingRef.current = true;
+
+    if (mode === 'speech') {
+      speak(`${intervalStr}. Сейчас ${timeStr}`)
+        .catch((err) => console.warn('Ошибка речи:', err))
+        .finally(() => (isSpeakingRef.current = false));
+    } else if (mode === 'beep') {
+      beep();
+      isSpeakingRef.current = false;
+    } else {
+      isSpeakingRef.current = false;
     }
-  }, []);
-
-  // Инициализация Web Worker или резервный механизм
-  useEffect(() => {
-    if (typeof window !== "undefined" && typeof Worker !== "undefined") {
-      try {
-        workerRef.current = new Worker("/timerWorker.js");
-        workerRef.current.onmessage = (e) => {
-          const { type, data } = e.data;
-          if (type === "tick") {
-            setCurrentTime(data.currentTime);
-            if (running && !paused && startTime) {
-              const newElapsed = data.now - startTime - totalPausedTime;
-              setElapsed(newElapsed);
-              console.log('useTimer tick:', {
-                elapsed: newElapsed,
-                seconds: Math.floor(newElapsed / 1000),
-                totalPausedTime,
-                startTime,
-                now: data.now,
-              });
-            }
-          } else if (type === "notification") {
-            const { now, timeStr, intervalStr } = data;
-            if (mode === "speech") {
-              speak(`${intervalStr}. Сейчас ${timeStr}`);
-              if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-                new Notification("Таймер", { body: `${intervalStr}. Сейчас ${timeStr}` });
-              }
-            } else if (mode === "beep") {
-              beep();
-              if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-                new Notification("Таймер", { body: "Бип!" });
-              }
-            }
-            setLastSpeakTime(now);
-          }
-        };
-
-        return () => {
-          workerRef.current?.terminate();
-        };
-      } catch (error) {
-        console.error('Инициализация Web Worker не удалась:', error);
-        // Резервный механизм с setInterval
-        const timer = setInterval(() => {
-          const now = Date.now();
-          setCurrentTime(new Date().toLocaleTimeString("ru-RU"));
-          if (running && !paused && startTime) {
-            const newElapsed = now - startTime - totalPausedTime;
-            setElapsed(newElapsed);
-            console.log('useTimer резервный tick:', {
-              elapsed: newElapsed,
-              seconds: Math.floor(newElapsed / 1000),
-              totalPausedTime,
-              startTime,
-              now,
-            });
-          }
-        }, 1000);
-
-        const notificationInterval = setInterval(() => {
-          if (running && !paused) {
-            const now = Date.now();
-            const diffMinutes = Math.floor((now - lastSpeakTime) / 60000);
-            if (diffMinutes >= intervalMinutes) {
-              const timeStr = new Date().toLocaleTimeString("ru-RU", {
-                hour: "2-digit",
-                minute: "2-digit",
-              });
-              const intervalStr = formatIntervalWithPastTense(intervalMinutes);
-              if (mode === "speech") {
-                speak(`${intervalStr}. Сейчас ${timeStr}`);
-                if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-                  new Notification("Таймер", { body: `${intervalStr}. Сейчас ${timeStr}` });
-                }
-              } else if (mode === "beep") {
-                beep();
-                if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-                  new Notification("Таймер", { body: "Бип!" });
-                }
-              }
-              setLastSpeakTime(now);
-            }
-          }
-        }, 1000);
-
-        return () => {
-          clearInterval(timer);
-          clearInterval(notificationInterval);
-        };
-      }
-    }
-  }, [running, paused, startTime, totalPausedTime, mode, intervalMinutes]);
-
-  // Синхронизация состояния с Web Worker
-  useEffect(() => {
-    if (workerRef.current) {
-      workerRef.current.postMessage({
-        running,
-        paused,
-        intervalMinutes,
-        lastSpeakTime,
-      });
-    }
-  }, [running, paused, intervalMinutes, lastSpeakTime]);
-
-  const start = () => {
-    setElapsed(0);
-    setStartTime(Date.now());
-    setLastSpeakTime(Date.now());
-    setPauseTime(null);
-    setTotalPausedTime(0);
   };
 
-  const resume = () => {
-    if (pauseTime) {
-      const timePaused = Date.now() - pauseTime;
-      setTotalPausedTime((prev) => prev + timePaused);
-      setPauseTime(null);
+  // ===== Web Worker или setInterval =====
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // просто часы — всегда обновляем currentTime
+    const clock = setInterval(() => {
+      setCurrentTime(
+        new Date().toLocaleTimeString('ru-RU', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        }),
+      );
+    }, 1000);
+
+    let timer: NodeJS.Timeout | null = null;
+
+    if (running && startTime) {
+      timer = setInterval(() => {
+        if (!paused) {
+          const now = Date.now();
+          setElapsed(now - startTime - totalPausedTime);
+
+          // проверка уведомлений
+          if (mode !== 'off' && intervalMinutes > 0) {
+            const sinceLast = now - lastNotificationTimeRef.current;
+            if (sinceLast >= intervalMinutes * 60000) {
+              const timeStr = new Date().toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit',
+              });
+              const intervalStr = formatIntervalWithPastTense(intervalMinutes);
+
+              lastNotificationTimeRef.current = now;
+              handleNotification(timeStr, intervalStr);
+            }
+          }
+        }
+      }, 1000);
     }
+
+    return () => {
+      clearInterval(clock);
+      if (timer) clearInterval(timer);
+    };
+  }, [running, startTime, paused, intervalMinutes, mode, totalPausedTime]);
+
+  // ===== Управление таймером =====
+  const start = () => {
+    const now = Date.now();
+    setStartTime(now);
+    setElapsed(0);
+    setTotalPausedTime(0);
+    setPauseTime(null);
+    lastNotificationTimeRef.current = now;
   };
 
   const stop = () => {
     setStartTime(null);
     setPauseTime(null);
+    // ❌ НЕ сбрасываем elapsed, чтобы модалка показывала итог
   };
 
   const pause = () => {
-    if (paused) {
-      resume();
-    } else {
+    if (!paused) {
       setPauseTime(Date.now());
+    } else if (pauseTime) {
+      const pausedDuration = Date.now() - pauseTime;
+      setTotalPausedTime((prev) => prev + pausedDuration);
+      setPauseTime(null);
+    }
+  };
+
+  const resume = () => {
+    if (pauseTime) {
+      const pausedDuration = Date.now() - pauseTime;
+      setTotalPausedTime((prev) => prev + pausedDuration);
+      setPauseTime(null);
     }
   };
 
@@ -195,8 +149,8 @@ export function useTimer(
 //       if (running && !paused && startTime) {
 //         const newElapsed = Date.now() - startTime - totalPausedTime;
 //         setElapsed(newElapsed);
-//         console.log('useTimer tick:', { 
-//           elapsed: newElapsed, 
+//         console.log('useTimer tick:', {
+//           elapsed: newElapsed,
 //           seconds: Math.floor(newElapsed / 1000),
 //           totalPausedTime,
 //           startTime,
