@@ -20,10 +20,10 @@ export default function TimerPushVersion() {
   const [paused, setPaused] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // подписка на пуши
-  const { isSubscribed, subscribe, isLoading, error, sendNotification } = usePush();
+  // Подписка на пуши
+  const { isSubscribed, subscribe, unsubscribe, isLoading, error, sendNotification } = usePush();
 
-  // логика таймера (через пуши вместо воркера)
+  // Логика таймера
   const { currentTime, elapsed, start, stop, pause, resume } = useTimerPush(
     intervalMinutes,
     running,
@@ -35,10 +35,13 @@ export default function TimerPushVersion() {
     },
   );
 
-  // регистрируем service worker
+  // Регистрируем service worker
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(console.error);
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then(() => console.log('Service Worker зарегистрирован'))
+        .catch((err) => console.error('Ошибка регистрации SW:', err));
     }
   }, []);
 
@@ -60,25 +63,29 @@ export default function TimerPushVersion() {
   };
 
   const handlePause = () => {
-    pause();
-    setPaused(!paused);
+    if (paused) {
+      resume();
+      setPaused(false);
+    } else {
+      pause();
+      setPaused(true);
+    }
   };
 
-  const handleResume = () => {
-    resume();
-    setPaused(false);
-  };
-
-  const handleSubscribe = async () => {
-    await subscribe();
+  const handleToggleNotifications = async () => {
+    if (isSubscribed) {
+      await unsubscribe();
+    } else {
+      await subscribe();
+    }
   };
 
   return (
     <motion.div className={s.timerContainer} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      {/* кнопка управления уведомлениями */}
+      {/* Кнопка управления уведомлениями */}
       <motion.div className={s.pushNotificationContainer}>
         <motion.button
-          onClick={handleSubscribe}
+          onClick={handleToggleNotifications}
           disabled={isLoading}
           className={`${s.pushButton} ${isSubscribed ? s.subscribed : ''}`}
           whileHover={{ scale: 1.05 }}
@@ -93,7 +100,7 @@ export default function TimerPushVersion() {
               ⟳
             </motion.div>
           ) : isSubscribed ? (
-            '📱 Пуш-уведомления включены'
+            '📱 Отключить уведомления'
           ) : (
             '🔔 Включить уведомления'
           )}
@@ -117,7 +124,7 @@ export default function TimerPushVersion() {
         onStart={handleStart}
         onStop={handleStop}
         onPause={handlePause}
-        onResume={handleResume}
+        onResume={handlePause} // Используем одну кнопку для паузы/возобновления
       />
 
       <TimeSummaryModal
