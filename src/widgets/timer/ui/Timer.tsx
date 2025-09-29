@@ -336,10 +336,6 @@ export default function Timer() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
     >
-      <button onClick={subscribe}>
-        {isSubscribed ? 'Уведомления включены' : 'Включить уведомления'}
-      </button>
-
       <motion.h1
         className={s.title}
         initial={{ scale: 0.8, opacity: 0 }}
