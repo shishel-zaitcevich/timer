@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { useTimerPush } from '@/entities/hooks/useTimerPush';
 import { usePush } from '@/entities/hooks/usePush';
+import { notificationService } from '@/shared/services/notificationService';
 
 import s from './Timer.module.scss';
 import NotificationMode from '@/features/notificationMode/ui/NotificationMode';
@@ -19,6 +20,7 @@ export default function TimerPushVersion() {
   const [running, setRunning] = useState(false);
   const [paused, setPaused] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showPermissionDialog, setShowPermissionDialog] = useState(false);
 
   // Подписка на пуши
   const { isSubscribed, subscribe, unsubscribe, isLoading, error, sendNotification } = usePush();
@@ -29,9 +31,8 @@ export default function TimerPushVersion() {
     running,
     paused,
     async (title: string, body: string) => {
-      if (mode !== 'off') {
-        await sendNotification(title, body);
-      }
+      // Используем новый сервис уведомлений
+      await notificationService.notify(title, body, mode);
     },
   );
 
@@ -47,7 +48,7 @@ export default function TimerPushVersion() {
 
   const handleStart = () => {
     if (!isSubscribed) {
-      alert('Сначала включите уведомления 🔔');
+      setShowPermissionDialog(true);
       return;
     }
     start();
@@ -69,6 +70,13 @@ export default function TimerPushVersion() {
     } else {
       pause();
       setPaused(true);
+    }
+  };
+
+  const handleEnableNotifications = async () => {
+    const success = await subscribe();
+    if (success) {
+      setShowPermissionDialog(false);
     }
   };
 
@@ -118,13 +126,25 @@ export default function TimerPushVersion() {
       <SetInterval value={intervalMinutes} onChange={setIntervalMinutes} />
       <NotificationMode mode={mode} onChange={setMode} />
 
+      {/* Кнопка тестирования уведомлений */}
+      {isSubscribed && (
+        <motion.button
+          onClick={() => notificationService.test(mode)}
+          className={s.testButton}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          🧪 Тест уведомлений
+        </motion.button>
+      )}
+
       <TimerControl
         running={running}
         paused={paused}
         onStart={handleStart}
         onStop={handleStop}
         onPause={handlePause}
-        onResume={handlePause} // Используем одну кнопку для паузы/возобновления
+        onResume={handlePause}
       />
 
       <TimeSummaryModal
@@ -132,6 +152,53 @@ export default function TimerPushVersion() {
         onClose={() => setIsModalOpen(false)}
         elapsed={elapsed}
       />
+
+      {/* Диалог запроса разрешения на уведомления */}
+      <AnimatePresence>
+        {showPermissionDialog && (
+          <motion.div
+            className={s.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowPermissionDialog(false)}
+          >
+            <motion.div
+              className={s.permissionDialog}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2>🔔 Включить уведомления?</h2>
+              <p>
+                Для работы таймера необходимо разрешить уведомления. Они будут приходить каждые{' '}
+                {intervalMinutes} минут.
+              </p>
+              <div className={s.dialogButtons}>
+                <motion.button
+                  className={s.cancelButton}
+                  onClick={() => setShowPermissionDialog(false)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Отмена
+                </motion.button>
+                <motion.button
+                  className={s.confirmButton}
+                  onClick={handleEnableNotifications}
+                  disabled={isLoading}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {isLoading ? 'Загрузка...' : 'Разрешить'}
+                </motion.button>
+              </div>
+              {error && <p className={s.dialogError}>❌ {error}</p>}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
