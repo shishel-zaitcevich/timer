@@ -9,21 +9,17 @@ interface TimeDisplayProps {
   paused: boolean;
 }
 
-export default function TimeDisplay({
-  elapsed,
-  running,
-  paused,
-}: TimeDisplayProps) {
+export default function TimeDisplay({ elapsed, running, paused }: TimeDisplayProps) {
   // Используем formatTime только если таймер работает, иначе "00:00"
   const formattedTime = running && !paused ? formatTime(elapsed) : '00:00';
 
   // Отладочный вывод
-  console.log('TimeDisplay props:', {
-    elapsed,
-    running,
-    paused,
-    formattedTime,
-  });
+  // console.log('TimeDisplay props:', {
+  //   elapsed,
+  //   running,
+  //   paused,
+  //   formattedTime,
+  // });
 
   const timeDigits = useMemo(() => {
     // Преобразуем elapsed (в миллисекундах) в часы, минуты, секунды
