@@ -336,10 +336,13 @@ export default function Timer() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
     >
+<<<<<<< HEAD
       {/* <button onClick={subscribe}>
         {isSubscribed ? 'Уведомления включены' : 'Включить уведомления'}
       </button> */}
 
+=======
+>>>>>>> def595189b827475345b5be1fc95d8a298479af8
       <motion.h1
         className={s.title}
         initial={{ scale: 0.8, opacity: 0 }}
@@ -398,3 +401,4 @@ export default function Timer() {
     </motion.div>
   );
 }
+

@@ -1,106 +1,82 @@
-// import { NextResponse } from 'next/server';
-// import webpush from 'web-push';
-// import { getSubscriptions } from '../save-subscription/route';
-
-// webpush.setVapidDetails(
-//   process.env.VAPID_SUBJECT!,
-//   process.env.VAPID_PUBLIC_KEY!,
-//   process.env.VAPID_PRIVATE_KEY!,
-// );
-
-// export async function POST(req: Request) {
-//   const { title, body } = await req.json();
-//   const subs = getSubscriptions();
-
-//   for (const sub of subs) {
-//     try {
-//       await webpush.sendNotification(sub, JSON.stringify({ title, body }));
-//     } catch (err) {
-//       console.error('Push error:', err);
-//     }
-//   }
-
-//   return NextResponse.json({ success: true });
-// }
-
-// app/api/send-notification/route.ts
 import { NextResponse } from 'next/server';
 import webpush from 'web-push';
-import { getSubscriptions } from '../save-subscription/route';
+import { subscriptions } from '../save-subscription/route';
 
+// Настройка VAPID
 webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT!,
-  process.env.VAPID_PUBLIC_KEY!,
+  'mailto:test@example.com',
+  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
   process.env.VAPID_PRIVATE_KEY!,
 );
 
-// Функция для преобразования браузерной подписки в формат web-push
-function convertToWebPushSubscription(browserSub: any): webpush.PushSubscription {
+// Адаптер: преобразует браузерный PushSubscription в web-push PushSubscription
+function toWebPushSubscription(sub: any): webpush.PushSubscription {
   return {
-    endpoint: browserSub.endpoint,
+    endpoint: sub.endpoint,
     keys: {
-      p256dh: browserSub.keys?.p256dh || '',
-      auth: browserSub.keys?.auth || '',
+      auth: sub.keys?.auth,
+      p256dh: sub.keys?.p256dh,
     },
   };
 }
 
 export async function POST(req: Request) {
   try {
-    const { title, body } = await req.json();
-    const subs = getSubscriptions();
+    const { title, body, options } = await req.json();
 
-    if (!subs || subs.length === 0) {
-      return NextResponse.json({ success: false, message: 'No subscriptions found' });
-    }
-
-    const promises = subs.map(async (browserSub) => {
-      try {
-        // Преобразуем браузерную подписку в формат web-push
-        const webPushSub = convertToWebPushSubscription(browserSub);
-
-        await webpush.sendNotification(
-          webPushSub,
-          JSON.stringify({
-            title,
-            body,
-            icon: '/icon-192x192.png',
-            badge: '/badge-72x72.png',
-            tag: 'timer-notification',
-            requireInteraction: true,
-            vibrate: [200, 100, 200],
-            data: {
-              url: '/',
-              timestamp: Date.now(),
-            },
-          }),
-        );
-        return { success: true, endpoint: browserSub.endpoint };
-      } catch (err) {
-        console.error('Push error for subscription:', err);
-        return { success: false, endpoint: browserSub.endpoint };
-      }
+    const payload = JSON.stringify({
+      title,
+      body,
+      icon: '/icon-192x192.png',
+      badge: '/badge-72x72.png',
+      data: { url: '/' },
+      options: {
+        requireInteraction: options?.requireInteraction ?? true,
+        vibrate: options?.vibrate ?? [200, 100, 200, 100, 200],
+        silent: false,
+        renotify: true,
+        tag: 'timer-notification',
+      },
     });
 
-    const results = await Promise.all(promises);
-    const successful = results.filter((r) => r.success).length;
-    const failed = results.filter((r) => !r.success).length;
+    const failed: any[] = [];
+    const results = await Promise.allSettled(
+      subscriptions.map(async (sub) => {
+        try {
+          const webPushSub = toWebPushSubscription(sub);
+          await webpush.sendNotification(webPushSub, payload, {
+            urgency: 'high', // Высокий приоритет для Android
+            TTL: 60, // Время жизни уведомления
+          });
+          return { success: true };
+        } catch (err: any) {
+          console.error('Ошибка при отправке уведомления:', err.message);
+          failed.push(sub);
+          return { success: false, error: err.message };
+        }
+      }),
+    );
 
-    console.log(`Push notifications sent: ${successful} successful, ${failed} failed`);
+    // Чистим невалидные подписки
+    failed.forEach((f) => {
+      const idx = subscriptions.indexOf(f);
+      if (idx !== -1) subscriptions.splice(idx, 1);
+    });
+
+    const successful = results.filter((r) => r.status === 'fulfilled').length;
 
     return NextResponse.json({
       success: true,
       sent: successful,
-      failed: failed,
-      total: subs.length,
-      results: results,
+      failed: failed.length,
+      total: subscriptions.length,
     });
-  } catch (error) {
-    console.error('Send notification error:', error);
+  } catch (e: any) {
+    console.error('Ошибка при отправке уведомлений:', e);
     return NextResponse.json(
       {
         success: false,
-        error: 'Internal server error',
+        error: e.message,
       },
       { status: 500 },
     );
