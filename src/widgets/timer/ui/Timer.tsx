@@ -394,3 +394,4 @@ export default function Timer() {
     </motion.div>
   );
 }
+
