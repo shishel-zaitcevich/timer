@@ -5,17 +5,28 @@ type NotificationMode = 'speech' | 'beep' | 'off';
 class NotificationService {
   private audioContext: AudioContext | null = null;
   private isDocumentVisible = true;
+  private isInitialized = false;
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      // Отслеживаем видимость документа
+    // Инициализация только на клиенте
+    if (typeof window === 'undefined') return;
+
+    this.initialize();
+  }
+
+  private initialize() {
+    if (this.isInitialized) return;
+    this.isInitialized = true;
+
+    // Отслеживаем видимость документа
+    if (typeof document !== 'undefined') {
       document.addEventListener('visibilitychange', () => {
         this.isDocumentVisible = !document.hidden;
       });
 
       // Инициализируем AudioContext при первом взаимодействии
       const initAudio = () => {
-        if (!this.audioContext) {
+        if (!this.audioContext && typeof window !== 'undefined') {
           this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
         }
         document.removeEventListener('click', initAudio);
@@ -28,6 +39,8 @@ class NotificationService {
 
   // Проигрывание звукового сигнала
   async playBeep(frequency = 800, duration = 500) {
+    if (typeof window === 'undefined') return false;
+
     try {
       if (!this.audioContext) {
         this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -61,6 +74,8 @@ class NotificationService {
 
   // Озвучка текста
   async speak(text: string) {
+    if (typeof window === 'undefined') return false;
+
     try {
       if (!('speechSynthesis' in window)) {
         console.warn('Speech Synthesis не поддерживается');
@@ -157,6 +172,8 @@ class NotificationService {
 
   // Локальное уведомление (без Service Worker)
   private showLocalNotification(title: string, body: string) {
+    if (typeof window === 'undefined') return;
+
     if ('Notification' in window && Notification.permission === 'granted') {
       try {
         new Notification(title, {
@@ -174,6 +191,8 @@ class NotificationService {
 
   // Проверка на мобильное устройство
   private isMobile(): boolean {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent,
     );
