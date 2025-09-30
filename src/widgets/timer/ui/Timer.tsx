@@ -13,20 +13,28 @@ import TimeSummaryModal from '@/features/timeSummaryModal/TimeSummaryModal';
 
 export default function Timer() {
   const [intervalMinutes, setIntervalMinutes] = useState(10);
-  const [mode, setMode] = useState<"speech" | "beep" | "off">("speech");
+  const [mode, setMode] = useState<'speech' | 'beep' | 'off'>('speech');
   const [running, setRunning] = useState(false);
   const [paused, setPaused] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { currentTime, elapsed, start, stop, pause, resume } = useTimer(intervalMinutes, mode, running, paused);
+  const { currentTime, elapsed, start, stop, pause, resume } = useTimer(
+    intervalMinutes,
+    mode,
+    running,
+    paused,
+  );
 
   // Регистрация Service Worker
   useEffect(() => {
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      navigator.serviceWorker.register('/sw.js').then((registration) => {
-        console.log('Service Worker зарегистрирован:', registration);
-      }).catch((error) => {
-        console.error('Ошибка регистрации Service Worker:', error);
-      });
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((registration) => {
+          console.log('Service Worker зарегистрирован:', registration);
+        })
+        .catch((error) => {
+          console.error('Ошибка регистрации Service Worker:', error);
+        });
     }
   }, []);
 
@@ -138,7 +146,6 @@ export default function Timer() {
 // import { AnimatePresence, motion } from 'framer-motion';
 // import TimeDisplay from '@/features/timeDisplay/TimeDisplay';
 // import TimeSummaryModal from '@/features/timeSummaryModal/TimeSummaryModal';
-
 
 // export default function Timer() {
 //   const [intervalMinutes, setIntervalMinutes] = useState(10);
