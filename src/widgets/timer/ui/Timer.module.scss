@@ -38,3 +38,265 @@
     margin-bottom: 20px;
   }
 }
+
+///
+///
+///
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.permissionDialog {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: 24px;
+    color: #333;
+    text-align: center;
+  }
+
+  p {
+    margin: 0 0 24px;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #666;
+    text-align: center;
+  }
+}
+
+.dialogButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+
+  button {
+    flex: 1;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.cancelButton {
+  background: #f0f0f0;
+  color: #666;
+
+  &:hover:not(:disabled) {
+    background: #e0e0e0;
+  }
+}
+
+.confirmButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #5568d3 0%, #63408a 100%);
+  }
+}
+
+.dialogError {
+  margin: 16px 0 0;
+  padding: 12px;
+  background: #fee;
+  border-radius: 8px;
+  color: #c33;
+  font-size: 14px;
+  text-align: center;
+}
+
+// Для темной темы
+@media (prefers-color-scheme: dark) {
+  .permissionDialog {
+    background: #2a2a2a;
+
+    h2 {
+      color: #fff;
+    }
+
+    p {
+      color: #bbb;
+    }
+  }
+
+  .cancelButton {
+    background: #3a3a3a;
+    color: #ccc;
+
+    &:hover:not(:disabled) {
+      background: #4a4a4a;
+    }
+  }
+
+  .dialogError {
+    background: #3a1a1a;
+    color: #ff8888;
+  }
+}
+
+.testButton {
+  margin: 16px 0;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+
+  &:hover {
+    box-shadow: 0 6px 20px rgba(240, 147, 251, 0.6);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.permissionDialog {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: 24px;
+    color: #333;
+    text-align: center;
+  }
+
+  p {
+    margin: 0 0 24px;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #666;
+    text-align: center;
+  }
+}
+
+.dialogButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+
+  button {
+    flex: 1;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.cancelButton {
+  background: #f0f0f0;
+  color: #666;
+
+  &:hover:not(:disabled) {
+    background: #e0e0e0;
+  }
+}
+
+.confirmButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #5568d3 0%, #63408a 100%);
+  }
+}
+
+.dialogError {
+  margin: 16px 0 0;
+  padding: 12px;
+  background: #fee;
+  border-radius: 8px;
+  color: #c33;
+  font-size: 14px;
+  text-align: center;
+}
+
+// Для темной темы
+@media (prefers-color-scheme: dark) {
+  .permissionDialog {
+    background: #2a2a2a;
+
+    h2 {
+      color: #fff;
+    }
+
+    p {
+      color: #bbb;
+    }
+  }
+
+  .cancelButton {
+    background: #3a3a3a;
+    color: #ccc;
+
+    &:hover:not(:disabled) {
+      background: #4a4a4a;
+    }
+  }
+
+  .dialogError {
+    background: #3a1a1a;
+    color: #ff8888;
+  }
+}
