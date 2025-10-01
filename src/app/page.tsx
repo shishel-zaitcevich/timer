@@ -5,9 +5,9 @@ import TimerWorkerVersion from '@/widgets/timer/ui/TimerWorkerVersion';
 export default function Home() {
   return (
     <main>
-      {/* <Timer /> */}
+      <Timer />
       {/* <TimerWorkerVersion /> */}
-      <TimerPushVersion />
+      {/* <TimerPushVersion /> */}
     </main>
   );
 }
