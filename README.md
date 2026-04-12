@@ -1,3 +1,8 @@
+Production
+
+https://timer-2u7bvt1ku-shishels-projects-e09cf028.vercel.app
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
